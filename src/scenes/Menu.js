@@ -6,7 +6,6 @@ class Menu extends Phaser.Scene {
     preload() {
         // load images/tile sprites
         this.load.image('rocket', './assets/rocket.png')
-        this.load.image('spaceship', './assets/spaceship.png')
         this.load.image('spaceship2', './assets/spaceship2.png')
         this.load.image('starfield', './assets/starfield.png')
         // load spritesheet
@@ -16,6 +15,8 @@ class Menu extends Phaser.Scene {
             startFrame: 0,
             endFrame: 9
         })
+        // load texture atlas
+        this.load.atlas('spaceship', './assets/spaceshipSheet.png', './assets/spaceship.json')
         // load audio
         this.load.audio('sfx-select', './assets/sfx-select.wav')
         this.load.audio('sfx-explosion', './assets/sfx-explosion.wav')
@@ -32,6 +33,12 @@ class Menu extends Phaser.Scene {
             key: 'explode',
             frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 9, first: 0}),
             frameRate: 30
+        })
+        this.anims.create({
+            key: 'spaceship',
+            frames: this.anims.generateFrameNumbers('spaceship', { start: 0, end: 3, first: 0}),
+            frameRate: 30,
+            loop: true
         })
 
         let menuConfig = {

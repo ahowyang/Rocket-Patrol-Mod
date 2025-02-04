@@ -18,9 +18,9 @@ class Play extends Phaser.Scene {
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0)
         
         // add spaceships (x3)
-        this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0)
-        this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 20).setOrigin(0, 0)
-        this.ship03 = new Spaceship(this, game.config.width, borderUISize*6 + borderPadding*4, 'spaceship', 0, 10).setOrigin(0, 0)
+        this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, this.textures.get('spaceship'), 0, 30).setOrigin(0, 0)
+        this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, this.textures.get('spaceship'), 0, 20).setOrigin(0, 0)
+        this.ship03 = new Spaceship(this, game.config.width, borderUISize*6 + borderPadding*4, this.textures.get('spaceship'), 0, 10).setOrigin(0, 0)
 
         // add bonus spaceship (x1)
         this.bShip = new Spaceship2(this, game.config.width + 10, borderUISize*5 + borderPadding*4, 'spaceship2', 0, 50).setOrigin(0, 0)
@@ -31,8 +31,9 @@ class Play extends Phaser.Scene {
         keyLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
 
-        // initialize score
+        // initialize scores
         this.p1Score = 0
+        this.p2Score = 0
         // display score
         let scoreConfig = {
             fontFamily: 'Courier',
@@ -46,7 +47,11 @@ class Play extends Phaser.Scene {
             },
             fixedWidth: 100
         }
-        this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig)
+        if(!this.p2Played) {
+            this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig)
+        } else {
+            this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p2Score, scoreConfig)
+        }
         
         // GAME OVER flag
         this.gameOver = false
@@ -60,17 +65,16 @@ class Play extends Phaser.Scene {
 
             // storing score
             if(!this.p2Played) {
-                this.p1 = this.scoreLeft
-                this.add.text(game.config.width/2, game.config.height/2 + 64, 'P2 START (Press ←)', scoreConfig).setOrigin(0.5)
+                this.add.text(game.config.width/2, game.config.height/2 + 64, `P1 score: ${this.p1Score}`, scoreConfig).setOrigin(0.5)
+                this.add.text(game.config.width/2, game.config.height/2 + 128, 'P2 START (Press ←)', scoreConfig).setOrigin(0.5)
             }
             if(this.p2Played) {
-                this.p2 = this.scoreLeft
-                if(this.p1 > this.p2) {
-                    this.add.text(game.config.width/2, game.config.height/2 + 128, 'P1 wins!', scoreConfig).setOrigin(0.5)
-                } else if(this.p2 > this.p1) {
-                    this.add.text(game.config.width/2, game.config.height/2 + 128, 'P2 wins!', scoreConfig).setOrigin(0.5)
-                } else {
-                    this.add.text(game.config.width/2, game.config.height/2 + 128, 'P1 and P2 tie!', scoreConfig).setOrigin(0.5)
+                if(this.p1Contest > this.p2Score) {
+                    this.add.text(game.config.width/2, game.config.height/2 + 128,  `P2 score: ${this.p2Score} | P1 wins!`, scoreConfig).setOrigin(0.5)
+                } else if(this.p2Score > this.p1Contest) {
+                    this.add.text(game.config.width/2, game.config.height/2 + 128, `P2 score: ${this.p2Score} | P2 wins!`, scoreConfig).setOrigin(0.5)
+                } else if(this.p1Contest == this.p2Score) {
+                    this.add.text(game.config.width/2, game.config.height/2 + 128, `P2 score: ${this.p2Score} | Tie!`, scoreConfig).setOrigin(0.5)
                 }
                 this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or ← for Menu', scoreConfig).setOrigin(0.5)
             }
@@ -102,9 +106,13 @@ class Play extends Phaser.Scene {
         // check key input for menu/p2 alternation
         if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
             if(!this.p2Played) {
+                this.p1Contest = this.p1Score
                 this.scene.restart()
                 this.p2Played = true
             } else {
+                this.p1Score = 0
+                this.p2Score = 0
+                this.p2Played = false
                 this.scene.start("menuScene")
             }
         }
@@ -162,8 +170,13 @@ class Play extends Phaser.Scene {
             boom.destroy()                      // remove explosion sprite
         })
         // score add and text update
-        this.p1Score += ship.points
-        this.scoreLeft.text = this.p1Score
+        if(!this.p2Played) {
+            this.p1Score += ship.points
+            this.scoreLeft.text = this.p1Score
+        } else {
+            this.p2Score += ship.points
+            this.scoreLeft.text = this.p2Score
+        }
 
         // choose an explosion sound to play at random
         let soundSeed = Math.floor(Math.random() * 4) + 1
